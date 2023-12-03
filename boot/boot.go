@@ -3,9 +3,9 @@ package boot
 import (
 	"fmt"
 	"math/rand"
-  "reflect"
-  "runtime"
-  "strings"
+
+  "github.com/Meowcenary/simulation_based_inference/util"
+  // "reflect"
 )
 
 // Error to catch data that is not supported by Boot
@@ -13,11 +13,6 @@ type AttributeError struct {}
 
 func (a *AttributeError) Error() string {
   return "Error with attribute passed to Boot"
-}
-
-func getFunctionName(temp interface{}) string {
-  strs := strings.Split((runtime.FuncForPC(reflect.ValueOf(temp).Pointer()).Name()), ".")
-  return strs[len(strs)-1]
 }
 
 // Note to self - the vector and matrix resample methods should return the same results if the data
@@ -47,7 +42,7 @@ func Boot(data []float64, seed int64, statistic func([]float64) float64, r int) 
   source := rand.NewSource(seed)
   random := rand.New(source)
   call := fmt.Sprintf("Boot(data: %v, seed: %d, random: %v, statistic: %v, r: %d stype: %q)",
-		data, seed, random, getFunctionName(statistic), r, stype)
+		data, seed, random, util.GetFunctionName(statistic), r, stype)
 
   // determine if data is a matrix or vector and call the appropriate function
   // switch reflect.TypeOf(data) {
@@ -67,7 +62,39 @@ func Boot(data []float64, seed int64, statistic func([]float64) float64, r int) 
   }
   fmt.Println(call)
   // need to cast to float64 for the division to work
-  return (total/float64(len(samples))), nil
+  return (total/float64(r)), nil
+}
+
+/*
+returns []float64 where each value is the average result of statistic() for each column from the bootstrap samples
+
+*/
+func BootMatrix(data [][]float64, seed int64, statistic func([][]float64) []float64, r int) ([]float64, error) {
+  source := rand.NewSource(seed)
+  random := rand.New(source)
+
+  samples := createBootstrapSamplesMatrix(random, [][]float64(data), r)
+
+  // totals is []float64 that is length of a row of data. All values are 0.0
+  totals := make([]float64, len(data[0]))
+
+  // for each bootstrap sample...
+  for i := 0; i < len(samples); i++ {
+    // calculate the statistic for the sample
+    results := statistic(samples[i])
+
+    // for each column within the results...
+    for j := 0; j < len(totals); j++ {
+      // add to the total for the calculation
+      totals[j] += results[j]
+    }
+  }
+
+  for i := 0; i < len(totals); i++ {
+    totals[i] = totals[i]/float64(r)
+  }
+
+  return totals, nil
 }
 
 /*
@@ -76,7 +103,7 @@ private method to create bootstrap samples for a vector, returns an array of flo
 r - the instance of rand to generate the samples with
 data - the data to be sampled as a two dimensional array of float64 values where each
        row is a multivariate value
-samples - r renamed for personal clarity
+samples - r renamed for personal clarity, number of samples to take
 */
 func createBootstrapSamplesVector(r *rand.Rand, data []float64, samples int) [][]float64 {
   initialSample := createBootstrapSampleVector(r, data)
@@ -100,4 +127,44 @@ func createBootstrapSampleVector(r *rand.Rand, data []float64) []float64 {
   return bootstrapSample
 }
 
-// func genericBootstrapSample[]()
+/*
+create bootstrap samples for data formatted as a matrix
+
+params:
+r -
+data -
+samples - the number of samples to create (this is "r" renamed for personal clarity)
+*/
+func createBootstrapSamplesMatrix(r *rand.Rand, data[][]float64, samples int) [][][]float64 {
+  sampleSize := len(data)
+  initialSample := createBootstrapSampleMatrix(r, data)
+  bootstrapSamples := make([][][]float64, sampleSize)
+
+  for i := 0; i < sampleSize; i++ {
+    bootstrapSamples[i] = createBootstrapSampleMatrix(r, initialSample)
+  }
+
+  return bootstrapSamples
+}
+
+/*
+in matrix format each row of the matrix represents a
+row of data where each index of the row acts as a column
+
+params:
+r -
+data -
+
+returns:
+[][]float64 matrix that has values randomly selected from the data passed to the function
+*/
+func createBootstrapSampleMatrix(r *rand.Rand, data [][]float64) [][]float64 {
+  sampleSize := len(data)
+  bootstrapSample := make([][]float64, sampleSize)
+
+  for i := 0; i < sampleSize; i++ {
+    bootstrapSample[i] = data[r.Intn(sampleSize)]
+  }
+
+  return bootstrapSample
+}
