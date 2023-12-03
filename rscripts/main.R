@@ -36,10 +36,3 @@ dataVector <- rnorm(100)
 resultVector <- boot(dataVector, mean_function, R = 1000)
 # Display the bootstrap results
 print(resultVector)
-
-# Calculate and print the bootstrap confidence interval for the mean
-# boot_ci <- boot.ci(resultVector, type = "basic")
-
-# print(boot_ci)
-# Access the call element to see the original function call
-# print(boot_ci$call)

@@ -8,6 +8,21 @@ import (
 )
 
 /*
+public function that returns pointer to instance of Rand with specified seed value
+
+params:
+seed - int64 value for seeding Rand
+
+returns:
+pointer to instance of Rand
+*/
+func SeedRand(seed int64) *rand.Rand {
+	// set to same value as seed of main.R
+	source := rand.NewSource(seed)
+	return rand.New(source)
+}
+
+/*
 public function for stringifying a function name. In this repo it is used as to get the name of the function passed
 as the argument "statistic" to the two Boot functions (BootVector, BootMatrix) defined in the boot package
 
@@ -68,4 +83,33 @@ func GenerateRandomMatrix(r *rand.Rand, rows, columns int) [][]float64 {
   }
 
   return matrix
+}
+
+// mean functions
+func Mean(data []float64) float64 {
+  total := 0.0
+  for i := 0; i < len(data); i++ {
+    total += data[i]
+  }
+  return total/float64(len(data))
+}
+
+// function that determines the mean of each column of a data matrix
+func MeanMatrix(data [][]float64) []float64 {
+  // set totals to the length of the first row
+  totals := make([]float64, len(data[0]))
+
+  // for each row of data
+  for i := 0; i < len(data); i++ {
+    // for each column within a row of data
+    for j := 0; j < len(data[i]); j++ {
+      totals[j] += data[i][j]
+    }
+  }
+
+  for i := 0; i < len(totals); i++ {
+    totals[i] = totals[i]/float64(len(data))
+  }
+
+  return totals
 }

@@ -5,6 +5,8 @@ import (
 	"math/rand"
   "reflect"
 	"testing"
+
+  "github.com/Meowcenary/simulation_based_inference/util"
 )
 
 // rand instance for tests
