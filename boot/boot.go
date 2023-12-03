@@ -41,18 +41,10 @@ func Boot(data []float64, seed int64, statistic func([]float64) float64, r int) 
   stype := "i"
   source := rand.NewSource(seed)
   random := rand.New(source)
-  call := fmt.Sprintf("Boot(data: %v, seed: %d, random: %v, statistic: %v, r: %d stype: %q)",
-		data, seed, random, util.GetFunctionName(statistic), r, stype)
+  call := fmt.Sprintf("Boot(data: [%f,..., %f], seed: %d, random: %v, statistic: %v, r: %d stype: %q)",
+		data[0], data[1], seed, random, util.GetFunctionName(statistic), r, stype)
 
-  // determine if data is a matrix or vector and call the appropriate function
-  // switch reflect.TypeOf(data) {
-  // // if dataFormat == reflect.TypeOf([][]float64{}) {
-  // //   createBootstrapSamplesMatrix(random, data.([][]float64), r)
-  // case reflect.TypeOf([]float64{}):
   samples := createBootstrapSamplesVector(random, []float64(data), r)
-  // default:
-  //   return 0.0, &AttributeError{}
-  // }
 
   // with the samples created run "statistic" function on sets
   // statistic(data)
